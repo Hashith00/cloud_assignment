@@ -1,0 +1,19 @@
+### IMPORTANT URLS ###
+
+## Hadoop docker 
+https://github.com/big-data-europe/docker-hadoop
+
+
+
+### IMPORTANT COMMANDS ###
+
+## Copy the file into the container namenode
+docker cp hadoop-mapreduce-examples-2.7.1-sources.jar namenode:/tmp/
+
+## Go inside to the container bash
+docker exec -it namenode /bin/bash
+
+## Add the file into the hdfs file system
+
+## Go to the file that added to file system
+hdfs dfs -ls /user/root/input
