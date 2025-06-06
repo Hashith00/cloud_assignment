@@ -5,101 +5,68 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Counter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
 
 public class TweetKeywordMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 
     private final static IntWritable one = new IntWritable(1);
-    private Text keywordOutputKey = new Text(); // To reuse Text object
+    private Text keywordOutputKey = new Text();
 
-    private int textColumnIndex = -1;
-    private String targetColumnName = "text_tweet";
-    private String csvDelimiter = ",";
-    private boolean headerProcessedByThisMapper = false;
-
+    private int textColumnIndex; // Index for the 'text_tweet' column
+    private String csvDelimiter;
     private List<String> targetKeywords;
-
-    // Enum for custom counters
-    private enum MAPPER_COUNTERS {
-        HEADER_NOT_FOUND,
-        LINES_SKIPPED_NO_HEADER,
-        COLUMN_NOT_FOUND_IN_HEADER,
-        INVALID_ROW_SHORT
-    }
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
         csvDelimiter = conf.get("csv.delimiter", ",");
-        // targetColumnName = conf.get("target.column.name", "text_tweet"); // Could be configurable
 
-        // Define the list of keywords to search for (converted to lowercase for case-insensitive matching)
+        // IMPORTANT: Read the column index from the configuration
+        textColumnIndex = conf.getInt("csv.text.column.index", -1);
+        if (textColumnIndex < 0) {
+            throw new IllegalArgumentException(
+                    "The column index ('csv.text.column.index') must be set via -D csv.text.column.index=<index>");
+        }
+
+        // Define the list of keywords to search for
         targetKeywords = new ArrayList<>(Arrays.asList(
                 "shooting", "swimming", "badminton", "basketball", "boxing", "cycling", "football"
         ));
-        // You could also make this list configurable via the Configuration object if needed,
-        // e.g., by passing a comma-separated string:
-        // String keywordsStr = conf.get("target.keywords", "shooting,swimming,...");
-        // if (keywordsStr != null && !keywordsStr.isEmpty()) {
-        //     targetKeywords = Arrays.asList(keywordsStr.toLowerCase().split(","));
-        // }
     }
 
     @Override
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         String line = value.toString();
+
+        // You might want to skip the header row manually. This checks if it's the first line of a file.
+        if (key.get() == 0) {
+            // Add a check to see if this line looks like a header, and if so, skip it.
+            // For now, we will assume all lines are data and rely on the user to handle the header.
+            // A more robust solution would be to filter it out before the job.
+        }
+
         if (line == null || line.trim().isEmpty()) {
             return;
         }
 
-        if (textColumnIndex == -1 && !headerProcessedByThisMapper) {
-            headerProcessedByThisMapper = true;
-            String[] headerParts = line.split(csvDelimiter); // Use proper CSV parsing for robustness
-            List<String> headerList = Arrays.asList(headerParts);
-            boolean foundColumn = false;
-            for (int i = 0; i < headerList.size(); i++) {
-                if (headerList.get(i).trim().equalsIgnoreCase(targetColumnName)) {
-                    textColumnIndex = i;
-                    foundColumn = true;
-                    break;
-                }
-            }
-            if (foundColumn) {
-                return; // Skip header line from data processing
-            } else {
-                context.getCounter(MAPPER_COUNTERS.COLUMN_NOT_FOUND_IN_HEADER).increment(1);
-                // textColumnIndex remains -1, subsequent lines for this mapper will be skipped.
-            }
-        }
-
-        if (textColumnIndex == -1) {
-            context.getCounter(MAPPER_COUNTERS.LINES_SKIPPED_NO_HEADER).increment(1);
-            return;
-        }
-
-        String[] parts = line.split(csvDelimiter); // Use proper CSV parsing for robustness
+        String[] parts = line.split(csvDelimiter);
 
         if (parts.length > textColumnIndex) {
-            String tweetTextOriginal = parts[textColumnIndex].trim();
-            if (tweetTextOriginal.isEmpty()) {
+            String tweetTextLowercase = parts[textColumnIndex].trim().toLowerCase();
+            if (tweetTextLowercase.isEmpty()) {
                 return;
             }
-            String tweetTextLowercase = tweetTextOriginal.toLowerCase(); // Convert tweet to lowercase once
 
             for (String keyword : targetKeywords) {
-                // The keywords in targetKeywords list are already lowercase
                 if (tweetTextLowercase.contains(keyword)) {
-                    keywordOutputKey.set(keyword); // Set the keyword as the key
+                    keywordOutputKey.set(keyword);
                     context.write(keywordOutputKey, one);
                 }
             }
-        } else {
-            context.getCounter(MAPPER_COUNTERS.INVALID_ROW_SHORT).increment(1);
         }
     }
 }

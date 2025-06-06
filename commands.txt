@@ -1,42 +1,29 @@
-### IMPORTANT URLS ###
+## IMPORTANT COMMANDS ##
 
-## Hadoop docker 
-https://github.com/big-data-europe/docker-hadoop
+### FILE UPLOAD COMMANDS ###
+scp -i cloud-project.pem tweet_classifier-1.0-SNAPSHOT.jar ubuntu@16.16.211.160:/home/ubuntu
+scp -i tokyo_2020_tweets.csv ubuntu@16.16.211.160:/home/ubuntu
 
-## Video URL
-https://www.youtube.com/watch?v=dLTI2HN9Ejg&t=46s
+### Copy the file into the container namenode (Jar file in temp)
+docker cp tweet_classifier-1.0-SNAPSHOT.jar namenode:/tmp/
+docker cp tokyo_2020_tweets.csv namenode:/tmp/
 
 
-### IMPORTANT COMMANDS ###
-
-## Copy the file into the container namenode (Jar file in temp)
-docker cp hadoop-mapreduce-examples-2.7.1-sources.jar namenode:/tmp/
-
-## Go inside to the container bash
+### Go inside to the container bash
 docker exec -it namenode /bin/bash
 
-## Add the file into docker (name node)
-docker cp sample.txt namenode:/tmp/
-
-## Add the file into the hdfs file system
+### Add the file into the hdfs file system
 1. Create a dir
 hdfs dfs -mkdir /user/root/input
 2. Copy file
-code 
+hdfs dfs -cp tokyo_2020_tweets.csv /user/root/input
 
+### Go to the jar file location
+cd /tmp
 
-## Go to the file that added to file system
-hdfs dfs -ls /user/root/input
+### Rnn the hadoop ( Need to in the folder where jar file is located)
+hadoop jar tweet_classifier-1.0-SNAPSHOT.jar org.tweetClassifier.KeywordCounterDriver -D csv.text.column.index=10 input2 output
 
-## Rnn the hadoop ( Need to in the folder where jar file is located)
-hadoop jar hadoop-mapreduce-examples-2.7.1-sources.jar org.apache.hadoop.examples.WordCount input output
-
-2
-hadoop jar simpleWordCount-1.0-SNAPSHOT.jar org.simpleWordCount.AttackFrequencyDriver input output
-
-
-## FILE UPLOAD COMMANDS ##
-scp -i cloud-project.pem hadoop-mapreduce-examples-2.7.1-sources.jar ubuntu@16.16.211.160:/home/ubuntu
 
 ## DATA SET ##
 https://www.kaggle.com/datasets/teamincribo/cyber-security-attacks/data
