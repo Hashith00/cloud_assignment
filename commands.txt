@@ -22,7 +22,7 @@ docker cp sample.txt namenode:/tmp/
 1. Create a dir
 hdfs dfs -mkdir /user/root/input
 2. Copy file
-hdfs dfs -put input.txt /user/root/input/
+code 
 
 
 ## Go to the file that added to file system
