@@ -1,66 +1,46 @@
-### IMPORTANT URLS
+# Important Commands
 
-## Hadoop docker
+## File Upload Commands
 
-[https://github.com/big-data-europe/docker-hadoop](https://github.com/big-data-europe/docker-hadoop)
+```bash
+# Upload JAR file to EC2 instance
+scp -i cloud-project.pem tweet_classifier-1.0-SNAPSHOT.jar ubuntu@16.16.211.160:/home/ubuntu
 
-## Video URL
-
-[https://www.youtube.com/watch?v=dLTI2HN9Ejg&t=46s](https://www.youtube.com/watch?v=dLTI2HN9Ejg&t=46s)
-
-### IMPORTANT COMMANDS
-
-## Copy the file into the container namenode (Jar file in temp)
-
-```
-   docker cp hadoop-mapreduce-examples-2.7.1-sources.jar namenode:/tmp/
+# Upload CSV file to EC2 instance
+scp -i tokyo_2020_tweets.csv ubuntu@16.16.211.160:/home/ubuntu
 ```
 
-## Go inside to the container bash
+## Docker Commands
 
-```
+```bash
+# Copy files into the namenode container
+docker cp tweet_classifier-1.0-SNAPSHOT.jar namenode:/tmp/
+docker cp tokyo_2020_tweets.csv namenode:/tmp/
+
+# Access container shell
 docker exec -it namenode /bin/bash
 ```
 
-## Add the file into docker (name node)
+## HDFS Commands
 
-```
-docker cp sample.txt namenode:/tmp/
+```bash
+# Create input directory
+hdfs dfs -mkdir /user/root/input
 
-```
-
-## Add the file into the hdfs file system
-
-1.  Create a dir
-    ```
-    hdfs dfs -mkdir /user/root/input
-    ```
-2.  Copy file
-    ```
-    hdfs dfs -put input.txt /user/root/input/
-    ```
-
-## Go to the file that added to file system
-
-```
-hdfs dfs -ls /user/root/input
+# Copy file to HDFS
+hdfs dfs -cp tokyo_2020_tweets.csv /user/root/input
 ```
 
-## Run the hadoop (Need to in the folder where jar file is located)
+## Hadoop Execution
 
-```
-hadoop jar hadoop-mapreduce-examples-2.7.1-sources.jar org.apache.hadoop.examples.WordCount input output
+```bash
+# Navigate to JAR location
+cd /tmp
 
-hadoop jar simpleWordCount-1.0-SNAPSHOT.jar org.simpleWordCount.AttackFrequencyDriver input output
-```
-
-## FILE UPLOAD COMMANDS
-
-```
-scp -i cloud-project.pem hadoop-mapreduce-examples-2.7.1-sources.jar ubuntu@16.16.211.160:/home/ubuntu
-
+# Run Hadoop job
+hadoop jar tweet_classifier-1.0-SNAPSHOT.jar org.tweetClassifier.KeywordCounterDriver -D csv.text.column.index=10 input2 output
 ```
 
-## DATA SET
+## Dataset Reference
 
-[https://www.kaggle.com/datasets/teamincribo/cyber-security-attacks/data](https://www.kaggle.com/datasets/teamincribo/cyber-security-attacks/data)
+Dataset source: [Kaggle - Cyber Security Attacks](https://www.kaggle.com/datasets/teamincribo/cyber-security-attacks/data)
